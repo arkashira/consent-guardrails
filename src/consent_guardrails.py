@@ -1,41 +1,27 @@
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List
 
 @dataclass
-class Legislation:
-    name: str
-    expert_input: bool
-    public_consultation: bool
-    data_protection: bool
-    consent: bool
-    review_date: str
+class ConsentToken:
+    token: str
+    timestamp: datetime
 
 class ConsentGuardrails:
     def __init__(self):
-        self.legislations = []
+        self.consent_history = []
 
-    def add_legislation(self, legislation: Legislation):
-        self.legislations.append(legislation)
+    def add_consent_token(self, token: str):
+        self.consent_history.append(ConsentToken(token, datetime.now()))
 
-    def get_legislations(self):
-        return self.legislations
+    def get_consent_history(self) -> List[ConsentToken]:
+        return self.consent_history
 
-    def review_legislation(self, name: str):
-        for legislation in self.legislations:
-            if legislation.name == name:
-                return legislation
-        return None
+    def download_consent_history(self) -> str:
+        history = [{"token": token.token, "timestamp": token.timestamp.isoformat()} for token in self.consent_history]
+        return json.dumps(history, indent=4)
 
-    def update_legislation(self, name: str, review_date: str):
-        for legislation in self.legislations:
-            if legislation.name == name:
-                legislation.review_date = review_date
-                return
-        raise ValueError("Legislation not found")
-
-    def validate_legislation(self, legislation: Legislation):
-        if not legislation.expert_input or not legislation.public_consultation:
-            raise ValueError("Legislation must be informed by expert input and public consultation")
-        if not legislation.data_protection or not legislation.consent:
-            raise ValueError("Legislation must prioritize data protection and consent")
+    def authenticate(self, user_id: str, password: str) -> bool:
+        # Simple authentication for demonstration purposes
+        return user_id == "user" and password == "password"

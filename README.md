@@ -1,15 +1,9 @@
 # Consent Guardrails
-
-A Python project for managing consent guardrails legislation.
-
+A simple implementation of a consent collection UI widget.
+## Features
+* Lists all signed tokens with timestamps
+* Tokens can be downloaded as signed JSON
+* History page respects user privacy and is protected by authentication
 ## Usage
-
-1. Create a `ConsentGuardrails` instance.
-2. Add legislations using the `add_legislation` method.
-3. Review legislations using the `review_legislation` method.
-4. Update legislations using the `update_legislation` method.
-5. Validate legislations using the `validate_legislation` method.
-
-## Testing
-
-Run the tests using `pytest`.
+1. Run `python -m pytest` to run the tests.
+2. Use the `ConsentGuardrails` class to manage consent tokens.

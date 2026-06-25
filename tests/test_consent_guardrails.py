@@ -1,46 +1,38 @@
-from consent_guardrails import ConsentGuardrails, Legislation
+import pytest
+import json
+from consent_guardrails import ConsentGuardrails, ConsentToken
 
-def test_add_legislation():
-    guardrails = ConsentGuardrails()
-    legislation = Legislation("Test Legislation", True, True, True, True, "2022-01-01")
-    guardrails.add_legislation(legislation)
-    assert len(guardrails.get_legislations()) == 1
+@pytest.fixture
+def consent_guardrails():
+    return ConsentGuardrails()
 
-def test_get_legislations():
-    guardrails = ConsentGuardrails()
-    legislation1 = Legislation("Test Legislation 1", True, True, True, True, "2022-01-01")
-    legislation2 = Legislation("Test Legislation 2", True, True, True, True, "2022-01-02")
-    guardrails.add_legislation(legislation1)
-    guardrails.add_legislation(legislation2)
-    assert len(guardrails.get_legislations()) == 2
+def test_add_consent_token(consent_guardrails):
+    token = "example_token"
+    consent_guardrails.add_consent_token(token)
+    assert len(consent_guardrails.get_consent_history()) == 1
+    assert consent_guardrails.get_consent_history()[0].token == token
 
-def test_review_legislation():
-    guardrails = ConsentGuardrails()
-    legislation = Legislation("Test Legislation", True, True, True, True, "2022-01-01")
-    guardrails.add_legislation(legislation)
-    reviewed_legislation = guardrails.review_legislation("Test Legislation")
-    assert reviewed_legislation.name == "Test Legislation"
+def test_get_consent_history(consent_guardrails):
+    token1 = "example_token1"
+    token2 = "example_token2"
+    consent_guardrails.add_consent_token(token1)
+    consent_guardrails.add_consent_token(token2)
+    history = consent_guardrails.get_consent_history()
+    assert len(history) == 2
+    assert history[0].token == token1
+    assert history[1].token == token2
 
-def test_update_legislation():
-    guardrails = ConsentGuardrails()
-    legislation = Legislation("Test Legislation", True, True, True, True, "2022-01-01")
-    guardrails.add_legislation(legislation)
-    guardrails.update_legislation("Test Legislation", "2022-01-02")
-    updated_legislation = guardrails.review_legislation("Test Legislation")
-    assert updated_legislation.review_date == "2022-01-02"
+def test_download_consent_history(consent_guardrails):
+    token = "example_token"
+    consent_guardrails.add_consent_token(token)
+    history = consent_guardrails.download_consent_history()
+    assert json.loads(history)[0]["token"] == token
 
-def test_validate_legislation():
-    legislation = Legislation("Test Legislation", False, True, True, True, "2022-01-01")
-    try:
-        ConsentGuardrails().validate_legislation(legislation)
-        assert False
-    except ValueError as e:
-        assert str(e) == "Legislation must be informed by expert input and public consultation"
+def test_authenticate(consent_guardrails):
+    assert consent_guardrails.authenticate("user", "password")
+    assert not consent_guardrails.authenticate("wrong_user", "password")
+    assert not consent_guardrails.authenticate("user", "wrong_password")
 
-def test_validate_legislation_data_protection():
-    legislation = Legislation("Test Legislation", True, True, False, True, "2022-01-01")
-    try:
-        ConsentGuardrails().validate_legislation(legislation)
-        assert False
-    except ValueError as e:
-        assert str(e) == "Legislation must prioritize data protection and consent"
+def test_authenticate_empty_history(consent_guardrails):
+    assert consent_guardrails.authenticate("user", "password")
+    assert consent_guardrails.get_consent_history() == []

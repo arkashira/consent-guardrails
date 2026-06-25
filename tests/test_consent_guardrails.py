@@ -1,36 +1,46 @@
-import pytest
-from consent_guardrails import get_projects, get_dashboard, get_project_logs, refresh_metrics, drill_down_into_project_logs
+from consent_guardrails import ConsentGuardrails, Legislation
 
-def test_get_projects():
-    projects = get_projects()
-    assert len(projects) == 3
+def test_add_legislation():
+    guardrails = ConsentGuardrails()
+    legislation = Legislation("Test Legislation", True, True, True, True, "2022-01-01")
+    guardrails.add_legislation(legislation)
+    assert len(guardrails.get_legislations()) == 1
 
-def test_get_dashboard():
-    projects = get_projects()
-    dashboard = get_dashboard(projects)
-    assert dashboard.total_projects == 3
-    assert dashboard.compliance_status == "Non-Compliant"
-    assert len(dashboard.recent_violations) == 3
+def test_get_legislations():
+    guardrails = ConsentGuardrails()
+    legislation1 = Legislation("Test Legislation 1", True, True, True, True, "2022-01-01")
+    legislation2 = Legislation("Test Legislation 2", True, True, True, True, "2022-01-02")
+    guardrails.add_legislation(legislation1)
+    guardrails.add_legislation(legislation2)
+    assert len(guardrails.get_legislations()) == 2
 
-def test_get_project_logs():
-    projects = get_projects()
-    project = get_project_logs(1, projects)
-    assert project.name == "Project 1"
+def test_review_legislation():
+    guardrails = ConsentGuardrails()
+    legislation = Legislation("Test Legislation", True, True, True, True, "2022-01-01")
+    guardrails.add_legislation(legislation)
+    reviewed_legislation = guardrails.review_legislation("Test Legislation")
+    assert reviewed_legislation.name == "Test Legislation"
 
-def test_refresh_metrics():
-    projects = get_projects()
-    dashboard = get_dashboard(projects)
-    refreshed_dashboard = refresh_metrics(dashboard, projects)
-    assert refreshed_dashboard.total_projects == 3
-    assert refreshed_dashboard.compliance_status == "Non-Compliant"
-    assert len(refreshed_dashboard.recent_violations) == 3
+def test_update_legislation():
+    guardrails = ConsentGuardrails()
+    legislation = Legislation("Test Legislation", True, True, True, True, "2022-01-01")
+    guardrails.add_legislation(legislation)
+    guardrails.update_legislation("Test Legislation", "2022-01-02")
+    updated_legislation = guardrails.review_legislation("Test Legislation")
+    assert updated_legislation.review_date == "2022-01-02"
 
-def test_drill_down_into_project_logs():
-    projects = get_projects()
-    project = drill_down_into_project_logs(1, projects)
-    assert project.name == "Project 1"
+def test_validate_legislation():
+    legislation = Legislation("Test Legislation", False, True, True, True, "2022-01-01")
+    try:
+        ConsentGuardrails().validate_legislation(legislation)
+        assert False
+    except ValueError as e:
+        assert str(e) == "Legislation must be informed by expert input and public consultation"
 
-def test_drill_down_into_project_logs_project_not_found():
-    projects = get_projects()
-    with pytest.raises(ValueError):
-        drill_down_into_project_logs(4, projects)
+def test_validate_legislation_data_protection():
+    legislation = Legislation("Test Legislation", True, True, False, True, "2022-01-01")
+    try:
+        ConsentGuardrails().validate_legislation(legislation)
+        assert False
+    except ValueError as e:
+        assert str(e) == "Legislation must prioritize data protection and consent"
